@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zia-Employee Daily Report</title>
+  <link rel="icon" type="image" href="https://ziagroup.org/wp-content/uploads/2023/01/IMG_7866.png">
+
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
+    .container { background: white; padding: 20px; border-radius: 10px; max-width: 900px; margin: auto; }
+    .employee-section { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px; }
+    .buttons { margin-top: 20px; }
+    textarea { width: 100%; height: 200px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <img src="https://ziagroup.org/wp-content/uploads/2023/01/IMG_7866.png" alt="zia"
+  height="150px">
+  <h2>Zia-Team Daily Report</h2>
+  <label>Team Name:
+    <select id="teamName">
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+      <option value="D">D</option>
+    </select>
+  </label><br/><br/>
+  <label>Date:
+    <input type="date" id="reportDate" />
+  </label><br/><br/>
+  <div id="employeeContainer"></div>
+  <button onclick="addEmployee()">Add Employee</button>
+  <div class="buttons">
+    <button onclick="generateReport()">Generate Report</button>
+    <button onclick="copyReport()">Copy Report</button>
+    <button onclick="shareWhatsApp()">Share via WhatsApp</button>
+    <button onclick="submitToGoogleSheets()">Submit to Google Sheets</button>
+  </div>
+  <br/>
+  <textarea id="reportOutput" readonly></textarea>
+</div>
+
+<script>
+let employeeCount = 0;
+const employeeContainer = document.getElementById("employeeContainer");
+
+function addEmployee() {
+  employeeCount++;
+  const div = document.createElement("div");
+  div.className = "employee-section";
+  div.innerHTML = `
+    <h3>Employee ${employeeCount}</h3>
+    <label>Name: <input type="text" class="name" /></label><br/>
+    <label>Login: <input type="time" class="login" /></label><br/>
+    <label>Logout: <input type="time" class="logout" /></label><br/>
+    <label>Project Area: <input type="text" class="projectArea" /></label><br/>
+    <label>Calls: <input type="number" class="calls" /></label>
+    <label>Follow-ups: <input type="number" class="followUps" /></label><br/>
+    <label>Interested Leads: <input type="number" class="interestedLeads" /></label><br/>
+
+    <label>Students Visited Today:</label><textarea class="visitedToday"></textarea><br/>
+    <label>Students Visiting Tomorrow:</label><textarea class="visitingTomorrow"></textarea><br/>
+    <label>Yesterday's Leads:</label><input type="number" class="yesterdaysLeads" /><br/>
+    <label>Students Visited Yesterday:</label><textarea class="yesterdaysVisited"></textarea><br/>
+  `;
+  employeeContainer.appendChild(div);
+}
+
+function generateReport() {
+  const teamName = document.getElementById("teamName").value;
+  const date = document.getElementById("reportDate").value.split("-").reverse().join("-");
+  const reportLines = [`------- Team Name : *${teamName}*-------\n📅 Date : *${date}*\n`];
+
+  const employeeSections = document.querySelectorAll(".employee-section");
+  employeeSections.forEach(section => {
+    const name = section.querySelector(".name").value;
+    const login = formatTime(section.querySelector(".login").value);
+    const logout = formatTime(section.querySelector(".logout").value);
+    const projectArea = section.querySelector(".projectArea").value;
+    const calls = section.querySelector(".calls").value;
+    const followUps = section.querySelector(".followUps").value;
+    const interestedLeads = section.querySelector(".interestedLeads").value;
+    const visitedToday = section.querySelector(".visitedToday").value.split('\n');
+    const visitingTomorrow = section.querySelector(".visitingTomorrow").value.split('\n');
+    const yesterdaysLeads = section.querySelector(".yesterdaysLeads").value;
+    const yesterdaysVisited = section.querySelector(".yesterdaysVisited").value.split('\n');
+
+    reportLines.push(`*Employee Name* : *${name}*`);
+    reportLines.push(`🟢 Login : *${login}*\n🔴 Logout : *${logout}*`);
+    reportLines.push(`⦿ Worked on *${projectArea}* Data. Completed *${calls}* calls and *${followUps}* follow ups.`);
+    reportLines.push(`⦿ Total No. of Interested leads : *${interestedLeads}*`);
+
+    reportLines.push(`⦿ No. of Students Visited today : *${visitedToday.length}*`);
+    reportLines.push(`⦿ List of Students Visited today with contact no.:`);
+    visitedToday.forEach((s, i) => reportLines.push(`${i + 1}. *${s}*`));
+
+    reportLines.push(`⦿ No. of Students Visiting Tomorrow : *${visitingTomorrow.length}*`);
+    reportLines.push(`⦿ List of Students Visiting Tomorrow with contact no.:`);
+    visitingTomorrow.forEach((s, i) => reportLines.push(`${i + 1}. *${s}*`));
+
+    reportLines.push(`⦿ No. of Yesterday's Leads : *${yesterdaysLeads}*`);
+    reportLines.push(`⦿ List of Students Visited Yesterday with contact no.:`);
+    yesterdaysVisited.forEach((s, i) => reportLines.push(`${i + 1}. *${s}*`));
+
+    reportLines.push(`\nThanks and Regards,\n*${name}*\n----------------------\n`);
+  });
+
+  document.getElementById("reportOutput").value = reportLines.join("\n");
+}
+
+function formatTime(time24) {
+  const [hour, minute] = time24.split(":");
+  const h = parseInt(hour);
+  const suffix = h >= 12 ? "PM" : "AM";
+  const hour12 = ((h + 11) % 12 + 1);
+  return `${hour12}:${minute} ${suffix}`;
+}
+
+function copyReport() {
+  const report = document.getElementById("reportOutput").value;
+  navigator.clipboard.writeText(report).then(() => alert("Report copied!"));
+}
+
+function shareWhatsApp() {
+  const text = encodeURIComponent(document.getElementById("reportOutput").value);
+  window.open(`https://wa.me/?text=${text}`, "_blank");
+}
+
+function submitToGoogleSheets() {
+  const teamName = document.getElementById("teamName").value;
+  const date = document.getElementById("reportDate").value.split("-").reverse().join("-");
+  const employees = [];
+
+  const sections = document.querySelectorAll(".employee-section");
+  sections.forEach(section => {
+    employees.push({
+      name: section.querySelector(".name").value,
+      login: formatTime(section.querySelector(".login").value),
+      logout: formatTime(section.querySelector(".logout").value),
+      projectArea: section.querySelector(".projectArea").value,
+      calls: section.querySelector(".calls").value,
+      followUps: section.querySelector(".followUps").value,
+      interestedLeads: section.querySelector(".interestedLeads").value,
+      visitedTodayCount: section.querySelector(".visitedToday").value.split('\n').length,
+      visitedToday: section.querySelector(".visitedToday").value.split('\n'),
+      visitingTomorrowCount: section.querySelector(".visitingTomorrow").value.split('\n').length,
+      visitingTomorrow: section.querySelector(".visitingTomorrow").value.split('\n'),
+      yesterdaysLeads: section.querySelector(".yesterdaysLeads").value,
+      yesterdaysVisited: section.querySelector(".yesterdaysVisited").value.split('\n')
+    });
+  });
+
+  const payload = { teamName, date, employees };
+
+  fetch('https://script.google.com/macros/s/AKfycbyfmURcrEtUt57dANhDwcfxXNpBEZJHUmx3YI-So1hNbFPkXntFniUAurXoTK2jywq5/exec', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(() => alert('Data submitted to Google Sheets!'));
+}
+
+addEmployee();
+</script>
+<h2>Made with ❤️ by Faisal</h2>
+</body>
+</html>
